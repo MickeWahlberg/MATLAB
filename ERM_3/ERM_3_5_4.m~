@@ -1,7 +1,5 @@
 %% Comments
 % riskpremie + premie -> avkastning -> utbetalning
-% ratios: 5%, 25%, 24% 1% ??
-% scr: 38k, 250k, 240k, ....
 %% Clear command window
 clc
 load('data');
@@ -141,7 +139,6 @@ expectedSecondaryReserve = zeros(nStrategies, scenarios, periods);
 assets = zeros(nStrategies, scenarios, periods);
 assetReturns = zeros(nStrategies, scenarios, periods);
 vCashFlows = zeros(nStrategies, scenarios, periods);
-bOF = zeros(nStrategies, scenarios, periods);
 
 % Assign start values
 secondaryReserve(:, :, 1) = V0;
@@ -159,6 +156,50 @@ secondaryFinCrisisBh5050(1) = V0;
 assetsFinCrisisBh5050 = zeros(1,12);
 assetsFinCrisisBh5050(1) = V0;
 
+bOF = zeros(nStrategies, scenarios, periods);
+
+
+%% ERM LABB 4
+% Returns ERM_4
+    ERM4m0 = 1.0025;
+    V0NSS = 1;
+    ERM4stocks = marketData(:,1:10);
+    ERM4y = ERM4stocks(2:end, :)./ERM4stocks(1:(end-1), :);
+
+    ERM4m = mean(ERM4y(end-100:end,:));
+
+    % Portfolio covariance, variance, and volatility
+    ERM4portfolioCov = cov(ERM4y(end:end-100,:));
+    ERM4portfolioVariance = diag(ERM4portfolioCov);
+    ERM4portfolioVolatility = sqrt(ERM4portfolioVariance);
+
+    %Estimate parameters
+    ERM4s = length(ERM4portfolioCov);
+    ERM4I = ones(ERM4s,1);
+
+    % For same dimensions as in notes
+    ERM4m = ERM4m';
+    ERM4A = ERM4I' / ERM4portfolioCov * ERM4I;
+    ERM4B = ERM4I' / ERM4portfolioCov * ERM4m;
+    ERM4C = ERM4m' / ERM4portfolioCov * ERM4m;
+    ERM4D = ERM4A * ERM4C - ERM4B^2;
+    
+    ERM4secondaryReserve = zeros(scenarios, periods);
+    ERM4tempSecondaryReserve = zeros(scenarios, periods);
+    ERM4riskPremium = zeros(scenarios, periods);
+    ERM4payOut = zeros(scenarios, periods);
+    ERM4expectedSecondaryReserve = zeros(scenarios, periods);
+    ERM4assets = zeros(scenarios, periods);
+    ERM4assetReturns = zeros(scenarios, periods);
+    ERM4vCashFlows = zeros(scenarios, periods);
+    ERM4secondaryReserve(:, 1) = V0;
+    ERM4tempSecondaryReserve(:, 1) = V0;
+    ERM4expectedSecondaryReserve(:, 1) = V0;
+    ERM4assets(:, 1) = V0;
+    ERM4bOF = zeros(scenarios, periods);
+    ERM4insolvent = zeros(1, scenarios);
+
+
 %% Reserves and assets
 disp('Calculating second order reserves and assets...')
 insolvent = zeros(nStrategies, scenarios);
@@ -171,8 +212,51 @@ portfolioReturns(4, :, :) = portfolioReturnD(:, :);
 portfolioReturns(5, :, :) = portfolioReturnE(:, :);
 portfolioReturns(6, :, :) = portfolioReturnF(:, :);
 
+% ratios: 5%, 25%, 24% 1% ??
+% scr: 38k, 250k, 240k, ....
+
 for i = 1:scenarios
     for j = 2:periods
+        
+%         % ERM 4
+%         % NO short selling
+%         if min(ERM4m) > ERM4m0
+%             ERM4weightsNSS(:) = (ERM4m == min(ERM4m).*ERM4secondaryReserve(i, j-1));
+%         elseif max(ERM4m) < ERM4m0
+%             ERM4weightsNSS(:) = (ERM4m == max(ERM4m).*ERM4secondaryReserve(i, j-1));
+%         else
+%             ERM4weightsNSS(:) = quadprog(ERM4portfolioCov, [], [], [], [ERM4I';ERM4m'], [ERM4secondaryReserve(i, j-1);ERM4m0*ERM4secondaryReserve(i, j-1)], zeros(ERM4s, 1));
+%             ERM4assetsWeightsNSS(:) = quadprog(ERM4portfolioCov, [], [], [], [ERM4I';ERM4m'], [ERM4assets(i, j-1);ERM4m0*ERM4assets(i, j-1)], zeros(ERM4s, 1));
+%         end
+%         
+%         ERM4tempSecondaryReserve(i,j) = sum(ERM4weightsNSS .* ...
+%             exp(log(normalReturns((i-1)*120+j-1, 1:10))));
+%         ERM4riskPremium(i, j) = data(j, 4) * ERM4secondaryReserve(i, j-1);
+%         if j > 61
+%             ERM4payOut(i, j) = ERM4tempSecondaryReserve(i, j) / ...
+%                 (PVUII(data(j, 2), dG));
+%             ERM4secondaryReserve(i, j) = ERM4tempSecondaryReserve(i, j) - ...
+%                 ERM4payOut(i, j) + riskPremium(i, j);
+%         else
+%             ERM4secondaryReserve(i, j) = ERM4tempSecondaryReserve(i, j) - ...
+%                 ERM4payOut(i, j) + P / 12 + ERM4riskPremium(i, j);
+%         end
+%         ERM4expectedSecondaryReserve(i, j) = ERM4secondaryReserve(i, j) * ...
+%             (data(j, 9) + data(j, 10));
+%         
+%         % Calculate value of assets
+%         ERM4assetReturns(i, j) = sum(ERM4assetsWeightsNSS .* ...
+%             exp(log(normalReturns((i-1)*120+j-1, 1:10)))) - ERM4assets(i, j-1);
+%         ERM4vCashFlows(i, j) = (P / 12) * population(j, 9) - population(j, 8) * ...
+%             max(firstReserve(j-1), ERM4secondaryReserve(i, j-1)) - ...
+%                 ERM4payOut(i, j) * population(j, 10);
+%         ERM4assets(i, j) = ERM4assets(i, j-1) + ERM4vCashFlows(i, j) + ERM4assetReturns(i, j);
+%         % Check if insolvent
+%         if ERM4assets(i, j) < BE(i, j)
+%             ERM4insolvent(i) = 1;
+%         end
+%            
+        
         
         % 5(ii)
         if i == 1 && j <= 12
@@ -222,6 +306,17 @@ for i = 1:nStrategies
     insolvencyRatio(i) = nrOfTimesInsolvent(i) / scenarios; 
 end
 
+%% ERM 4 SCR
+ERM4nrOfTimesInsolvent = sum(ERM4insolvent(:) == 1);
+ERM4insolvenceRatio = ERM4nrOfTimesInsolvent / (scenarios);
+ERM4bOFYr = zeros(scenarios, 11);
+ERM4bOFYr(:, 1) = ERM4assets(:, 1) - BE(:, 1);
+ERM4bOFYr(:, 2:end) = ERM4assets(:, 13:12:121) - BE(:, 13:12:121);
+ERM4deltaBOFYr = diff(ERM4bOFYr')';
+ERM4sCRYr = reshape(ERM4deltaBOFYr, 1, length(ERM4deltaBOFYr(1,:)) * length(ERM4deltaBOFYr(:,1)));
+ERM4sCRYr = sort(ERM4sCRYr, 'descend')';
+ERM4valueAtRiskSCRYr = ERM4sCRYr(length(ERM4sCRYr) * 0.95);
+
 %% BoF calculation
 disp('Calculating BoF and SCR...')
 
@@ -257,33 +352,35 @@ SCRF = quantile(deltaBofF, 0.05);
 
 
 %% Mean stuff
-% bOF5aYr(find(((bOF5aYr==inf)+(bOF5aYr==-inf)+isnan(bOF5aYr))==1)) = 0;
-% bOF5bYr(find(((bOF5bYr==inf)+(bOF5bYr==-inf)+isnan(bOF5bYr))==1)) = 0;
-% bOF5cYr(find(((bOF5cYr==inf)+(bOF5cYr==-inf)+isnan(bOF5cYr))==1)) = 0;
-% bOF5dYr(find(((bOF5dYr==inf)+(bOF5dYr==-inf)+isnan(bOF5dYr))==1)) = 0;
-% bOF5eYr(find(((bOF5eYr==inf)+(bOF5eYr==-inf)+isnan(bOF5eYr))==1)) = 0;
-% bOF5fYr(find(((bOF5fYr==inf)+(bOF5fYr==-inf)+isnan(bOF5fYr))==1)) = 0;
-% 
-% meanA = mean(mean(insolventA .* bOF5aYr(:,end)));
-% meanB = mean(mean(insolventB .* bOF5bYr(:,end)));
-% meanC = mean(mean(insolventC .* bOF5cYr(:,end)));
-% meanD = mean(mean(insolventD .* bOF5dYr(:,end)));
-% meanE = mean(mean(insolventE .* bOF5eYr(:,end)));
-% meanF = mean(mean(insolventF .* bOF5fYr(:,end)));
-% 
-% %% Plot
-% figure
-% scatter(insolvencyRatioA, meanA)
-% hold on
-% scatter(insolvencyRatioB, meanB)
-% scatter(insolvencyRatioC, meanC)
-% scatter(insolvencyRatioD, meanD)
-% scatter(insolvencyRatioE, meanE)
-% scatter(insolvencyRatioF, meanF)
-% title('Mean-insolvency probability diagram');
-% ylabel('Mean of own funds');
-% xlabel('Insolvency probability');
-% legend('BH(100/0','BH(50/50)', 'CM(50/50)', 'CH(50/50) with duration matching', 'CPPI(1)', 'The Dart throwing strategy');
+bOF5aYr(find(((bOF5aYr==inf)+(bOF5aYr==-inf)+isnan(bOF5aYr))==1)) = 0;
+bOF5bYr(find(((bOF5bYr==inf)+(bOF5bYr==-inf)+isnan(bOF5bYr))==1)) = 0;
+bOF5cYr(find(((bOF5cYr==inf)+(bOF5cYr==-inf)+isnan(bOF5cYr))==1)) = 0;
+bOF5dYr(find(((bOF5dYr==inf)+(bOF5dYr==-inf)+isnan(bOF5dYr))==1)) = 0;
+bOF5eYr(find(((bOF5eYr==inf)+(bOF5eYr==-inf)+isnan(bOF5eYr))==1)) = 0;
+bOF5fYr(find(((bOF5fYr==inf)+(bOF5fYr==-inf)+isnan(bOF5fYr))==1)) = 0;
+
+
+
+meanA = mean(mean(insolventA .* bOF5aYr(:,end)));
+meanB = mean(mean(insolventB .* bOF5bYr(:,end)));
+meanC = mean(mean(insolventC .* bOF5cYr(:,end)));
+meanD = mean(mean(insolventD .* bOF5dYr(:,end)));
+meanE = mean(mean(insolventE .* bOF5eYr(:,end)));
+meanF = mean(mean(insolventF .* bOF5fYr(:,end)));
+
+%% Plot
+figure
+scatter(insolvencyRatioA, meanA)
+hold on
+scatter(insolvencyRatioB, meanB)
+scatter(insolvencyRatioC, meanC)
+scatter(insolvencyRatioD, meanD)
+scatter(insolvencyRatioE, meanE)
+scatter(insolvencyRatioF, meanF)
+title('Mean-insolvency probability diagram');
+ylabel('Mean of own funds');
+xlabel('Insolvency probability');
+legend('BH(100/0','BH(50/50)', 'CM(50/50)', 'CH(50/50) with duration matching', 'CPPI(1)', 'The Dart throwing strategy');
 
 %% Plot more
 plotStuff(expectedSecondaryReserve(1,1,:), assets(1,1,:), BE, bOF(1,1, :), firstReserve, 'Strategy BH(100/0) - scenario 1');

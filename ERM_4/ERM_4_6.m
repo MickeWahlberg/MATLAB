@@ -4,8 +4,10 @@ if not(exist('scenarioData', 'var'))
     %Load data
     disp('Loading scenario data...')
     %f = load('ScenarioFile_dcc_labb3');
-    scenarioData = xlsread('ScenarioFile_Excel');
-    scenarioData = scenarioData(1:121*2000,:);
+    f = load('scenarioData');
+    scenarioData = f.scenarioData;
+    %scenarioData = xlsread('ScenarioFile_Excel');
+    %scenarioData = scenarioData(1:121*2000,:);
     disp('Scenariod data loaded!')
 end
 
