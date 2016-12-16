@@ -71,10 +71,6 @@ t = (60*12:120*12)';
 firstReserve = zeros(721,1);
 i = 1;
 for t = 60*12:120*12
-    if i == 60
-       disp('snopp 3==>') 
-    end
-    
     firstReserve(i) = G(t, dG);
     i = i + 1;
 end
@@ -282,7 +278,7 @@ for i = 1:nStrategies
     Y = squeeze(bOF(i,:,end));
     Y = mean(Y(1,notInsolvent));
     
-    scatter(insolvencyRatio(i), Y, linspace(1,100,200), 'filled')
+    scatter(insolvencyRatio(i), Y, 'filled')
 end
 title('Mean-insolvency probability diagram');
 ylabel('Mean of own funds');
