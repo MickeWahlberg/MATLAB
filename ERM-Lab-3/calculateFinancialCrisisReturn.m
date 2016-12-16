@@ -1,4 +1,9 @@
-function returns = calculateFinancialCrisisReturn(marketData, strategy)
+function [returns, unAdjMonthlyFinCrisisData] = calculateFinancialCrisisReturn(marketData, strategy)
+
+unAdjFinancialCrisisData = marketData(601:649, :);
+unAdjMonthlyFinCrisisData(1, :) = unAdjFinancialCrisisData(1, :);
+unAdjMonthlyFinCrisisData(2:13, :) = unAdjFinancialCrisisData(5:4:49, :);
+
 adjMarketData = marketData;
 adjMarketData(:, 11:15) = exp(-marketData(:,11:15) .* [5 10 15 20 30]);
 financialCrisisData = adjMarketData(601:649, :);
