@@ -189,7 +189,7 @@ secondaryFinCrisisBh5050(1) = V0;
 assetsFinCrisisBh5050 = zeros(1,12);
 assetsFinCrisisBh5050(1) = V0;
 finCrisisBE = zeros(1,12);
-
+rejt = zeros(12,720);
 %% Reserves and assets
 disp('Calculating second order reserves and assets...')
 insolvent = zeros(nStrategies, scenarios);
@@ -202,7 +202,7 @@ for i = 1:scenarios
             t = 1:(722-j);
             betaFinCrisis = calibrateNSParameters(T, unAdjFinancialCrisisData(j, 11:15)');
             rateFinCrisis = nelson(betaFinCrisis, 1/12 : 1/12 : 60);
-            finCrisisBE(j-1) = sum(firstOrderCashFlow((j):end).*exp(-rateFinCrisis((j-1):end).*(t./12)),2);
+            finCrisisBE(j-1) = sum(firstOrderCashFlow((j):end).*exp(-rateFinCrisis(1:end-(j-2)).*(t./12)));
         end
         
         if i == 1 && j <= 12
@@ -267,8 +267,8 @@ for i = 1:nStrategies
    SCR(i) = quantile(deltaBof(i,:), alpha);
 end
 
-finCrisisBh100DeltaBOF = (assetsFinCrisisBh100(end) - finCrisisBE(1,12)) - (assetsFinCrisisBh100(1) - finCrisisBE(1,1));
-finCrisisBh5050DeltaBOF = (assetsFinCrisisBh5050(end) - finCrisisBE(1,12)) - (assetsFinCrisisBh5050(1) - finCrisisBE(1,1));
+finCrisisBh100DeltaBOF = (assetsFinCrisisBh100(end) - finCrisisBE(end)) - (assetsFinCrisisBh100(1) - finCrisisBE(1));
+finCrisisBh5050DeltaBOF = (assetsFinCrisisBh5050(end) - finCrisisBE(end)) - (assetsFinCrisisBh5050(1) - finCrisisBE(1));
 %% Mean stuff
 
 figure

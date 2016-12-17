@@ -27,10 +27,28 @@ if strcmp(strategy, 'BH100')
     portfolioValue = sum(allocation.*finCrisisScenarioPrices(:,13),2);
     returns = diff(portfolioValue)./portfolioValue(1:end-1,:);
 else
+%     stockAll = startingPortfolioValue/20;
+%     bondAll = startingPortfolioValue/2;
+%     allocation = [ones(1,10).*stockAll, bondAll]./finCrisisScenarioPrices(1, 1:11);
+%     portfolioValue = sum(allocation.*finCrisisScenarioPrices(:,1:11),2);
+%     returns = diff(portfolioValue)./portfolioValue(1:end-1,:);
+    monthlyFinCrisisLogReturns = exp(monthlyFinCrisisLogReturns);
+
+    r = unAdjMonthlyFinCrisisData(:, 11:15);
+    zcbReturns = exp(-(r(2:13,:) - r(1:12,:)) .* [5 10 15 20 30]) .* exp(r(2:13,:) * 1/12);
+    monthlyFinCrisisLogReturns(:, 11:15) = zcbReturns;
     stockAll = startingPortfolioValue/20;
     bondAll = startingPortfolioValue/2;
-    allocation = [ones(1,10).*stockAll, bondAll]./finCrisisScenarioPrices(1, 1:11);
-    portfolioValue = sum(allocation.*finCrisisScenarioPrices(:,1:11),2);
+    allocation = zeros(13, 11);
+    allocation(:,:) = [ones(13,10).*stockAll, ones(13,1)*bondAll];
+    
+    for T = 2:13
+        t = T:13:length(allocation);
+        allocation(t,:) = allocation(t-1,:) .* monthlyFinCrisisLogReturns(T-1, 1:11);
+    end
+    
+    portfolioValue = sum(allocation,2);
     returns = diff(portfolioValue)./portfolioValue(1:end-1,:);
+    
 end
 end
