@@ -188,7 +188,7 @@ secondaryFinCrisisBh5050 = zeros(1,12);
 secondaryFinCrisisBh5050(1) = V0;
 assetsFinCrisisBh5050 = zeros(1,12);
 assetsFinCrisisBh5050(1) = V0;
-finCrisisBE = zeros(1,13);
+finCrisisBE = zeros(1,12);
 rejt = zeros(12,720);
 %% Reserves and assets
 disp('Calculating second order reserves and assets...')
@@ -196,32 +196,31 @@ insolvent = zeros(nStrategies, scenarios);
 for i = 1:scenarios
     for j = 2:periods
         
-        if i == 1 && j <= 14
-            t = 1:(722-j);
-            betaFinCrisis = calibrateNSParameters(T, unAdjFinancialCrisisData(j-1, 11:15)');
+        % 5(ii)
+        if i == 1 && j <=13
+            t = 1:(721-j);
+            betaFinCrisis = calibrateNSParameters(T, unAdjFinancialCrisisData(j, 11:15)');
             rateFinCrisis = nelson(betaFinCrisis, 1/12 : 1/12 : (60*12-j+2)/12);
-            finCrisisBE(j-1) = sum(firstOrderCashFlow((j):end).*exp(-rateFinCrisis(1:720-(j)+2).*(t./12)), 2);
+            finCrisisBE(j-1) = sum(firstOrderCashFlow((j):end-1).*exp(-rateFinCrisis(1:length(rateFinCrisis)-(j)+2).*(t./12)), 2);
         end
         
-        % 5(ii)
-        if i == 1 && j <= 13
-   
+        if i == 1 && j <= 12
             % Secondary reserve for buy and hold 100% 15 year bond
             secondaryFinCrisisBh100(j) = calculateSecondaryReserve(secondaryFinCrisisBh100(j-1), ...
-                portfolioReturnFinCrisisA(j-1), P, dG, data(j, 2), data(j, 4));
+                portfolioReturnFinCrisisA(j), P, dG, data(j, 2), data(j, 4));
             
             % Assets for buy and hold 100% 15 year bond
             assetsFinCrisisBh100(j) = calculateAssets(population(j, 9), population(j, 8), population(j, 10), ...
-                assetsFinCrisisBh100(i, j-1), portfolioReturnFinCrisisA(j-1), firstReserve(j-1), secondaryFinCrisisBh100(j-1), ...
+                assetsFinCrisisBh100(i, j-1), portfolioReturnFinCrisisA(j), firstReserve(j-1), secondaryFinCrisisBh100(j-1), ...
                     P, 0);
             
             % Secondary reserve for buy and hold 50% 5 year bond 50% stocks
             secondaryFinCrisisBh5050(j) = calculateSecondaryReserve(secondaryFinCrisisBh5050(j-1), ...
-                portfolioReturnFinCrisisB(j-1), P, dG, data(j, 2), data(j, 4));
+                portfolioReturnFinCrisisB(j), P, dG, data(j, 2), data(j, 4));
             
             % Assets for buy and hold 50% 5 year bond 50% stocks
             assetsFinCrisisBh5050(j) = calculateAssets(population(j, 9), population(j, 8), population(j, 10), ...
-                assetsFinCrisisBh5050(i, j-1), portfolioReturnFinCrisisB(j-1), firstReserve(j-1), secondaryFinCrisisBh5050(j-1), ...
+                assetsFinCrisisBh5050(i, j-1), portfolioReturnFinCrisisB(j), firstReserve(j-1), secondaryFinCrisisBh5050(j-1), ...
                     P, 0);
         end
        
